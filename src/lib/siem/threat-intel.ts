@@ -12,7 +12,7 @@ const KNOWN: Record<string, Omit<ThreatIntel, "ip">> = {
   "1.1.1.1": { malicious: false, confidence: 1, country: "Australia", city: "Sydney", asn: "AS13335 Cloudflare", tags: ["Public DNS", "Allowlisted"], reports: 0, firstSeen: "2018-04-01", lastSeen: "2026-09-19" },
 };
 
-export const MALICIOUS_IPS = Object.keys(KNOWN).filter((ip) => KNOWN[ip].malicious);
+export const MALICIOUS_IPS = Object.keys(KNOWN).filter((ip) => KNOWN[ip]?.malicious);
 
 const COUNTRIES = [
   ["Brazil", "São Paulo", "AS28573 Claro"],
@@ -40,15 +40,15 @@ export function lookupIp(ip: string): ThreatIntel {
     return { ip, malicious: false, confidence: 0, country: "Internal", city: "RFC1918", asn: "Private Network", tags: ["Internal Asset"], reports: 0, firstSeen: "-", lastSeen: "-" };
   }
   const h = hash(ip);
-  const c = COUNTRIES[h % COUNTRIES.length];
+  const c = COUNTRIES[h % COUNTRIES.length] ?? ["Unknown", "Unknown", "AS0 Unknown"];
   const suspicious = h % 5 === 0;
   return {
     ip,
     malicious: suspicious,
     confidence: suspicious ? 55 + (h % 30) : h % 15,
-    country: c[0],
-    city: c[1],
-    asn: c[2],
+    country: c[0] ?? "Unknown",
+    city: c[1] ?? "Unknown",
+    asn: c[2] ?? "Unknown",
     tags: suspicious ? ["Suspicious Activity", "Low Reputation"] : ["No Known Abuse"],
     reports: suspicious ? 20 + (h % 200) : 0,
     firstSeen: suspicious ? "2026-06-12" : "-",
