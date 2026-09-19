@@ -35,7 +35,7 @@ function classifyWeb(uri: string, ua: string, status: string): EventType {
   return "Unclassified";
 }
 
-function build(partial: Omit<NormalizedEvent, "id" | "severity" | "rule" | "mitreId" | "status"> & { rule?: SigmaRule }): NormalizedEvent {
+function build(partial: Omit<NormalizedEvent, "id" | "severity" | "rule" | "mitreId" | "status"> & { rule?: SigmaRule | undefined }): NormalizedEvent {
   const rule = partial.rule ?? ruleByType(partial.eventType);
   const severity: Severity = rule ? rule.severity : "Info";
   return { id: nextId(), status: "open", ...partial, rule, mitreId: rule?.mitreId, severity };
@@ -125,7 +125,7 @@ export function correlate(events: NormalizedEvent[]): NormalizedEvent[] {
     if (e.eventType === "SSH Auth Failure" || e.eventType === "SSH Brute Force") sshFails.set(e.sourceIp, (sshFails.get(e.sourceIp) ?? 0) + 1);
     if (e.eventType === "Firewall Drop" || e.eventType === "Port Scan") {
       const s = fwPorts.get(e.sourceIp) ?? new Set<string>();
-      s.add(String(e.meta.dstPort ?? ""));
+      s.add(String(e.meta["dstPort"] ?? ""));
       fwPorts.set(e.sourceIp, s);
     }
   }

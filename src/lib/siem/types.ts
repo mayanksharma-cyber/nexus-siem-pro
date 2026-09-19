@@ -32,13 +32,13 @@ export interface NormalizedEvent {
   eventType: EventType;
   severity: Severity;
   sourceIp: string;
-  destIp?: string;
-  user?: string;
+  destIp?: string | undefined;
+  user?: string | undefined;
   asset: string;
   raw: string;
   logSource: "sshd" | "nginx" | "apache" | "ufw" | "syslog" | "kernel" | "unknown";
-  rule?: SigmaRule;
-  mitreId?: string;
+  rule?: SigmaRule | undefined;
+  mitreId?: string | undefined;
   meta: Record<string, string | number | undefined>;
   status: "open" | "contained" | "blocked";
 }
