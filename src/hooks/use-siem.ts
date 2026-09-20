@@ -55,10 +55,30 @@ export function useSiem() {
     toast.success(`Firewall rule pushed`, { description: `DENY inbound from ${ip} on perimeter edge (ufw + cloud SG).` });
   }, []);
 
+  const unblockIp = useCallback((ip: string) => {
+    setBlockedIps((s) => {
+      const n = new Set(s);
+      n.delete(ip);
+      return n;
+    });
+    setEvents((prev) => prev.map((e) => (e.sourceIp === ip && e.status === "blocked" ? { ...e, status: "open" } : e)));
+    toast.info(`Firewall rule withdrawn`, { description: `${ip} removed from the perimeter deny-list.` });
+  }, []);
+
   const quarantine = useCallback((host: string) => {
     setIsolatedHosts((s) => new Set(s).add(host));
     setEvents((prev) => prev.map((e) => (e.asset === host && e.status === "open" ? { ...e, status: "contained" } : e)));
     toast.success(`Endpoint quarantined`, { description: `${host} isolated via EDR — only SOC jump-host traffic permitted.` });
+  }, []);
+
+  const releaseHost = useCallback((host: string) => {
+    setIsolatedHosts((s) => {
+      const n = new Set(s);
+      n.delete(host);
+      return n;
+    });
+    setEvents((prev) => prev.map((e) => (e.asset === host && e.status === "contained" ? { ...e, status: "open" } : e)));
+    toast.info(`Endpoint released`, { description: `${host} reconnected to production networks.` });
   }, []);
 
   const toggleStream = useCallback(() => setStreaming((s) => !s), []);
@@ -72,11 +92,11 @@ export function useSiem() {
     ingest(parseBatch(generateScenario().join("\n")));
     timer.current = setInterval(() => {
       ingest(parseBatch(generateScenario().join("\n")));
-    }, STREAM_INTERVAL_MS);
+    }, streamRate);
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
-  }, [streaming, ingest]);
+  }, [streaming, streamRate, ingest]);
 
   const metrics = useMemo(() => {
     const alerts = events.filter((e) => e.rule && e.severity !== "Info");
