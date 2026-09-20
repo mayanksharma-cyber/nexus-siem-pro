@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Crosshair, FileUp, Globe2, ScanSearch, Search, Sparkles } from "lucide-react";
+import { Crosshair, FileUp, Globe2, RotateCcw, ScanSearch, Search, ShieldBan, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -125,6 +125,41 @@ export function Sidebar({ api, lookupTarget }: Props) {
           </div>
         )}
       </section>
+
+      {/* Containment */}
+      {(api.blockedIps.size > 0 || api.isolatedHosts.size > 0) && (
+        <section className="panel p-4">
+          <div className="panel-title">
+            <ShieldBan className="size-3.5 text-neon" /> Active Containment
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {[...api.blockedIps].map((ip) => (
+              <li key={`ip-${ip}`} className="flex items-center gap-2 rounded border border-sev-critical/30 bg-sev-critical/5 px-2.5 py-1.5">
+                <ShieldBan className="size-3.5 shrink-0 text-sev-critical" />
+                <div className="min-w-0 flex-1">
+                  <div className="telemetry truncate text-foreground">{ip}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">firewall deny</div>
+                </div>
+                <Button variant="ghost" size="sm" className="h-7 px-2 font-mono text-[10px]" onClick={() => api.unblockIp(ip)}>
+                  <RotateCcw /> Undo
+                </Button>
+              </li>
+            ))}
+            {[...api.isolatedHosts].map((h) => (
+              <li key={`host-${h}`} className="flex items-center gap-2 rounded border border-success/30 bg-success/5 px-2.5 py-1.5">
+                <ShieldCheck className="size-3.5 shrink-0 text-success" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-mono text-xs text-foreground">{h}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">edr isolation</div>
+                </div>
+                <Button variant="ghost" size="sm" className="h-7 px-2 font-mono text-[10px]" onClick={() => api.releaseHost(h)}>
+                  <RotateCcw /> Release
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* TTPs */}
       <section className="panel p-4">
