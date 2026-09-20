@@ -13,6 +13,7 @@ export function useSiem() {
   const [blockedIps, setBlockedIps] = useState<Set<string>>(() => new Set());
   const [isolatedHosts, setIsolatedHosts] = useState<Set<string>>(() => new Set());
   const [ingestedTotal, setIngestedTotal] = useState(0);
+  const [streamRate, setStreamRate] = useState<number>(STREAM_INTERVAL_MS);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const ingest = useCallback((newEvents: NormalizedEvent[]) => {
