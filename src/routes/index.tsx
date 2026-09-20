@@ -30,7 +30,14 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen">
-      <Header streaming={api.streaming} onToggleStream={api.toggleStream} onOpenRules={() => setRulesOpen(true)} onPurge={api.purge} />
+      <Header
+        streaming={api.streaming}
+        onToggleStream={api.toggleStream}
+        onOpenRules={() => setRulesOpen(true)}
+        onPurge={api.purge}
+        streamRate={api.streamRate}
+        onStreamRateChange={api.setStreamRate}
+      />
 
       <main className="mx-auto flex max-w-[1800px] flex-col gap-3 p-4 lg:p-6">
         <KpiCards metrics={api.metrics} />
