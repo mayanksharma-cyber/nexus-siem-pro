@@ -125,11 +125,19 @@ export function ForensicsModal({ event, api, onClose }: ForensicsProps) {
                 <div>
                   <div className="panel-title mb-1.5"><Zap className="size-3" /> Autonomous SOAR Playbooks</div>
                   <div className="space-y-2">
-                    <Button variant={blocked ? "panel" : "danger"} className="w-full justify-start" disabled={blocked} onClick={() => api.blockIp(event.sourceIp)}>
-                      <ShieldBan /> {blocked ? "Source IP already blocked" : "Block Source IP at Firewall"}
+                    <Button
+                      variant={blocked ? "panel" : "danger"}
+                      className="w-full justify-start"
+                      onClick={() => (blocked ? api.unblockIp(event.sourceIp) : api.blockIp(event.sourceIp))}
+                    >
+                      <ShieldBan /> {blocked ? `Unblock ${event.sourceIp} (rollback)` : "Block Source IP at Firewall"}
                     </Button>
-                    <Button variant={isolated ? "panel" : "neon"} className="w-full justify-start" disabled={isolated} onClick={() => api.quarantine(event.asset)}>
-                      <ShieldCheck /> {isolated ? "Endpoint already quarantined" : `Quarantine Endpoint (${event.asset})`}
+                    <Button
+                      variant={isolated ? "panel" : "neon"}
+                      className="w-full justify-start"
+                      onClick={() => (isolated ? api.releaseHost(event.asset) : api.quarantine(event.asset))}
+                    >
+                      <ShieldCheck /> {isolated ? `Release ${event.asset} from isolation` : `Quarantine Endpoint (${event.asset})`}
                     </Button>
                   </div>
                   <ul className="mt-3 space-y-1 font-mono text-[10px] text-muted-foreground">
