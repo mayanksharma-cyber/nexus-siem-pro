@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, Microscope, Search, ShieldBan, ShieldCheck, Terminal } from "lucide-react";
+import { Download, FileSpreadsheet, Microscope, Search, ShieldBan, ShieldCheck, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,17 +23,41 @@ const fmtTs = (iso: string) => {
 export function LogTable({ api, onForensics }: Props) {
   const [q, setQ] = useState("");
   const [sev, setSev] = useState<SevFilter>("All");
+  const [alertsOnly, setAlertsOnly] = useState(false);
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return [...api.events]
       .reverse()
       .filter((e) => sev === "All" || e.severity === sev)
+      .filter((e) => !alertsOnly || (e.rule !== undefined && e.severity !== "Info"))
       .filter((e) => {
         if (!needle) return true;
         return [e.sourceIp, e.user, e.asset, e.eventType, e.mitreId, e.rule?.title, e.rule?.id, e.id].some((v) => v?.toLowerCase().includes(needle));
       });
-  }, [api.events, q, sev]);
+  }, [api.events, q, sev, alertsOnly]);
+
+  const download = (content: string, mime: string, ext: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nexussiem-audit-${new Date().toISOString().replace(/[:.]/g, "-")}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportCsv = () => {
+    const cols = ["id", "timestamp", "severity", "eventType", "sourceIp", "user", "asset", "logSource", "ruleId", "ruleTitle", "mitreId", "status"];
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [
+      cols.join(","),
+      ...rows.map((e) =>
+        [e.id, e.timestamp, e.severity, e.eventType, e.sourceIp, e.user, e.asset, e.logSource, e.rule?.id, e.rule?.title, e.mitreId, e.status].map(esc).join(","),
+      ),
+    ];
+    download(lines.join("\n"), "text/csv", "csv");
+  };
 
   const exportAudit = () => {
     const report = {
@@ -51,13 +75,7 @@ export function LogTable({ api, onForensics }: Props) {
       },
       events: rows.map((e) => ({ ...e, rule: e.rule ? { id: e.rule.id, title: e.rule.title, mitreId: e.rule.mitreId } : null })),
     };
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `nexussiem-audit-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    download(JSON.stringify(report, null, 2), "application/json", "json");
   };
 
   return (
@@ -81,8 +99,19 @@ export function LogTable({ api, onForensics }: Props) {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant={alertsOnly ? "neon" : "panel"}
+          size="sm"
+          onClick={() => setAlertsOnly((v) => !v)}
+          aria-pressed={alertsOnly}
+        >
+          Alerts only
+        </Button>
         <Button variant="panel" size="sm" onClick={exportAudit} disabled={rows.length === 0}>
           <Download /> Export Audit Report
+        </Button>
+        <Button variant="panel" size="sm" onClick={exportCsv} disabled={rows.length === 0}>
+          <FileSpreadsheet /> CSV
         </Button>
       </div>
 
@@ -108,7 +137,11 @@ export function LogTable({ api, onForensics }: Props) {
               </tr>
             )}
             {rows.map((e) => (
-              <tr key={e.id} className={cn("animate-row-in border-b border-border/50 transition-colors hover:bg-neon/5", e.status !== "open" && "opacity-60")}>
+              <tr
+                key={e.id}
+                onClick={() => onForensics(e)}
+                className={cn("animate-row-in cursor-pointer border-b border-border/50 transition-colors hover:bg-neon/5", e.status !== "open" && "opacity-60")}
+              >
                 <td className="px-3 py-2"><SeverityBadge severity={e.severity} /></td>
                 <td className="telemetry whitespace-nowrap px-3 py-2 text-muted-foreground">{fmtTs(e.timestamp)}</td>
                 <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">{e.eventType}</td>
@@ -134,7 +167,7 @@ export function LogTable({ api, onForensics }: Props) {
                   )}
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <Button variant="panel" size="sm" className="h-7 px-2" onClick={() => onForensics(e)}>
+                  <Button variant="panel" size="sm" className="h-7 px-2" onClick={(ev) => { ev.stopPropagation(); onForensics(e); }}>
                     <Microscope /> Forensics
                   </Button>
                 </td>
