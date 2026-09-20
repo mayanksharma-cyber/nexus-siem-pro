@@ -1,5 +1,6 @@
 import { BookOpen, Radio, ShieldHalf, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -7,9 +8,17 @@ interface Props {
   onToggleStream: () => void;
   onOpenRules: () => void;
   onPurge: () => void;
+  streamRate: number;
+  onStreamRateChange: (ms: number) => void;
 }
 
-export function Header({ streaming, onToggleStream, onOpenRules, onPurge }: Props) {
+const RATES = [
+  { ms: 1000, label: "Fast · 1s" },
+  { ms: 3500, label: "Normal · 3.5s" },
+  { ms: 8000, label: "Slow · 8s" },
+];
+
+export function Header({ streaming, onToggleStream, onOpenRules, onPurge, streamRate, onStreamRateChange }: Props) {
   return (
     <header className="sticky top-0 z-30 border-b border-border/80 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1800px] flex-wrap items-center justify-between gap-4 px-4 py-3 lg:px-6">
@@ -40,6 +49,16 @@ export function Header({ streaming, onToggleStream, onOpenRules, onPurge }: Prop
             <Radio />
             {streaming ? "Stop Live Attack Stream" : "Start Live Attack Stream"}
           </Button>
+          <Select value={String(streamRate)} onValueChange={(v) => onStreamRateChange(Number(v))}>
+            <SelectTrigger className="h-8 w-[150px] border-border bg-background/60 font-mono text-xs" aria-label="Stream rate">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="font-mono text-xs">
+              {RATES.map((r) => (
+                <SelectItem key={r.ms} value={String(r.ms)}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="panel" size="sm" onClick={onOpenRules}>
             <BookOpen />
             Sigma Rules Repository
