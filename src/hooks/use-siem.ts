@@ -125,7 +125,23 @@ export function useSiem() {
     };
   }, [events, ingestedTotal, blockedIps, isolatedHosts]);
 
-  return { events, streaming, toggleStream, ingestRaw, loadSample, purge, blockIp, quarantine, blockedIps, isolatedHosts, metrics };
+  return {
+    events,
+    streaming,
+    toggleStream,
+    streamRate,
+    setStreamRate,
+    ingestRaw,
+    loadSample,
+    purge,
+    blockIp,
+    unblockIp,
+    quarantine,
+    releaseHost,
+    blockedIps,
+    isolatedHosts,
+    metrics,
+  };
 }
 
 export type SiemApi = ReturnType<typeof useSiem>;
